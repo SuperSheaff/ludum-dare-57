@@ -48,4 +48,16 @@ public class PlayerMoveState : PlayerGroundedState
         base.FixedUpdate();
     }
 
+    
+    // Triggers an animation event
+    public override void OnAnimationEvent(string eventName)
+    {
+        switch (eventName)
+        {
+            case "step":
+                SoundManager.instance.PlaySound("step", player.transform);
+                break;
+        }
+    }
+
 }

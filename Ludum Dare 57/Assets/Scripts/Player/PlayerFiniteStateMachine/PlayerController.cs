@@ -8,7 +8,9 @@ public class PlayerController : MonoBehaviour
     #region State Variables
 
     public StateMachine<PlayerController> StateMachine;
+    public static PlayerController instance             { get; private set; }
 
+    public PlayerStartState         StartState          { get; private set; }
     public PlayerRespawnState       RespawnState        { get; private set; }
     public PlayerDeathState         DeathState          { get; private set; }
     public PlayerIdleState          IdleState           { get; private set; }
@@ -16,38 +18,26 @@ public class PlayerController : MonoBehaviour
     public PlayerJumpState          JumpState           { get; private set; }
     public PlayerInAirState         InAirState          { get; private set; }
     public PlayerLandState          LandState           { get; private set; }
+    public PlayerTeleportState      TeleportState       { get; private set; }
 
     [SerializeField]
     public GameSettings Settings;
 
-    // [SerializeField]
-    // public GameController GameController;
-
-    // [SerializeField]
-    // public CameraController CameraController;
+    [SerializeField]
+    public Transform TeleportMarker     { get; set; }
+    public bool IsTeleportMarkerOut     { get; set; }
+    public bool HasTeleportedInAir      { get; set; }
+    public float TeleportTime;
 
     #endregion
 
     #region Components
 
-    [SerializeField]
-
     public Core                 Core                { get; private set; }
-    public Animator             Animator      { get; private set; }
+    public Animator             Animator            { get; private set; }
     public PlayerInputHandler   InputHandler        { get; private set; }
     public Rigidbody2D          playerRigidBody     { get; private set; }
     public BoxCollider2D        playerBoxCollider   { get; private set; }
-    
-    // public PlayerAudioManager   playerAudioManager  { get; private set; }
-
-    // public ParticleSystem       playerRunParticles;
-    // public ParticleSystem       playerLandParticles;
-    // public ParticleSystem       playerWallLandParticles;
-    // public ParticleSystem       playerJumpParticles;
-    // public ParticleSystem       playerGroundSlideParticles;
-
-    // public float                HealthPoints;
-    // public GameObject           HealthBar;
 
     #endregion
 
@@ -61,23 +51,25 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region Other Variables
+    #region Velocity Variables
 
     private Vector2             workspace;
     private Vector2             referenceVelocity;
-
-    // private bool                canPowerUp;
-    // private bool                isPoweredUp;
-    // private bool                isSafe;
-    // private bool                isSizzling;
-
-    // public bool                IsPlayable;
 
     #endregion
 
     #region Unity Callback Functions
 
-        private void Awake() {
+        private void Awake() 
+        {
+
+            if (instance != null && instance != this)
+            {
+                Destroy(this.gameObject);
+                return;
+            }
+
+            instance = this;
 
             Core = GetComponentInChildren<Core>();
 
@@ -85,16 +77,22 @@ public class PlayerController : MonoBehaviour
 
             DeathState          = new PlayerDeathState(this, Settings);
             RespawnState        = new PlayerRespawnState(this, Settings);
+            StartState          = new PlayerStartState(this, Settings);
             IdleState           = new PlayerIdleState(this, Settings);
             MoveState           = new PlayerMoveState(this, Settings);
             JumpState           = new PlayerJumpState(this, Settings);
             InAirState          = new PlayerInAirState(this, Settings);
             LandState           = new PlayerLandState(this, Settings);
+            TeleportState       = new PlayerTeleportState(this, Settings);
 
+            IsTeleportMarkerOut = false;
+            HasTeleportedInAir = false;
+
+            TeleportTime        = Time.time;
         }
 
         private void Start() {
-            Animator      = GetComponent<Animator>();
+            Animator            = GetComponent<Animator>();
             InputHandler        = GetComponent<PlayerInputHandler>();
             playerRigidBody     = GetComponent<Rigidbody2D>();
             playerBoxCollider   = GetComponent<BoxCollider2D>();
@@ -102,7 +100,7 @@ public class PlayerController : MonoBehaviour
             referenceVelocity       = Vector2.zero;
             RespawnPoint.position   = StartingSpawn.position;
             
-            StateMachine.Initialize(RespawnState);
+            StateMachine.Initialize(StartState);
         }
 
         private void Update() {
@@ -117,15 +115,10 @@ public class PlayerController : MonoBehaviour
 
         private void OnTriggerEnter2D(Collider2D collision) 
         {
-            // if (collision.tag == "SafeZone") 
-            // {
-            //     isSafe = true;
-            // }
-
-            // if (collision.tag == "ChargeZone") 
-            // {
-            //     canPowerUp = true;
-            // }
+            if (collision.CompareTag("Obstacle"))
+            {
+                StateMachine.ChangeState(RespawnState);
+            }
         }
 
         private void OnTriggerStay2D(Collider2D collision) 
@@ -174,52 +167,21 @@ public class PlayerController : MonoBehaviour
             RespawnPoint.position   = newPosition;
         }
 
-        // public void SetIsSafe(bool value) 
-        // {
-        //     isSafe = value;
-        // }
+        public void ResetTeleportMarker()
+        {
+            if (TeleportMarker != null)
+            {
+                Destroy(TeleportMarker.gameObject);
+                TeleportMarker = null;
+            }
 
-        // public void SetIsPoweredUp(bool value) 
-        // {
-        //     isPoweredUp = value;
-
-        //     if (value)
-        //     {
-        //         Animator.SetBool("isPowered", true);
-        //     } else {
-        //         Animator.SetBool("isPowered", false);
-        //     }
-        // }
+            IsTeleportMarkerOut = false;
+            HasTeleportedInAir = false;
+            TeleportTime = Time.time;
+        }
 
     #endregion
 
-    #region Get Functions
-
-        // public bool GetIsPoweredUp() 
-        // {
-        //     return isPoweredUp;
-        // }
-
-        // public bool GetCanPowerUp() 
-        // {
-        //     return canPowerUp;
-        // }
-
-    #endregion
-
-    #region Trigger Functions
-
-        // private void AnimationTrigger()                 => StateMachine.CurrentState.AnimationTrigger();
-        // private void AnimationFinishedTrigger()         => StateMachine.CurrentState.AnimationFinishedTrigger();
-        // private void AnimationStartMovementTrigger()    => StateMachine.CurrentState.AnimationStartMovementTrigger();
-        // private void AnimationStopMovementTrigger()     => StateMachine.CurrentState.AnimationStopMovementTrigger();
-        // private void AnimationTurnOffFlip()             => StateMachine.CurrentState.AnimationTurnOffFlip();
-        // private void AnimationTurnOnFlip()              => StateMachine.CurrentState.AnimationTurnOnFlip();
-        // private void AnimationActionTrigger()           => StateMachine.CurrentState.AnimationActionTrigger();
-
-    #endregion
-    
-    
     #region Other Functions
 
     public void ResetGame() {
@@ -230,6 +192,12 @@ public class PlayerController : MonoBehaviour
 
     public void CameraShake() {
         // StartCoroutine(CameraController.ShakeTheCamera(1f, 0.5f));
+    }
+
+    // Triggers an animation event
+    public void AnimationEvent(string eventName)
+    {
+        StateMachine.CurrentState.OnAnimationEvent(eventName);
     }
 
     #endregion

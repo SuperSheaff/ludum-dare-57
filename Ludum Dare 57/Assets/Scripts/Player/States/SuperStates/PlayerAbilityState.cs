@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerAbilityState : PlayerState
+public class PlayerAbilityState : PlayerControlState
 {
     protected int yInput;
     

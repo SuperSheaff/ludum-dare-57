@@ -16,18 +16,22 @@ public class PlayerJumpState : PlayerAbilityState
     {
         base.Enter();
 
+        SoundManager.instance.PlaySound("jump", player.transform);
         player.InputHandler.UseJumpInput();
         core.Movement.SetVelocityY(settings.jumpForce);
         isAbilityDone = true;
         amountOfJumpsLeft--;
     }
 
-    public bool CanJump() {
-        if (amountOfJumpsLeft > 0) 
+    public bool CanJump() 
+    {
+        if (player.HasTeleportedInAir)
         {
-            return true;
-        } else {
             return false;
+        }
+        else 
+        {
+            return amountOfJumpsLeft > 0;
         }
     }
 

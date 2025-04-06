@@ -21,3 +21,7 @@ MonoBehaviour:
   coyoteTime: 0.1
   deathTime: 2
   startingHealth: 3
+  TeleportMarkerPrefab: {fileID: 712742456495123103, guid: 1331cad4f5475b64184ff443fbb08645, type: 3}
+  TeleportMarkerSpeed: 250
+  TeleportThrowCooldown: 1
+  TeleportDelay: 0.2

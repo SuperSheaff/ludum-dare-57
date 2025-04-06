@@ -23,9 +23,9 @@ public class PlayerState : State<PlayerController>
     public override void Enter()
     {
         DoChecks();
-        startTime = Time.time;
-        isAnimationFinished = false;
-        isExitingState = false;
+        startTime               = Time.time;
+        isAnimationFinished     = false;
+        isExitingState          = false;
     }
 
     public override void Exit()
@@ -47,23 +47,6 @@ public class PlayerState : State<PlayerController>
     #region Animation Events
 
     public override void OnAnimationEvent(string eventName) { }
-
-    // public virtual void AnimationTrigger() { }
-
-    // public virtual void AnimationFinishedTrigger()
-    // {
-    //     isAnimationFinished = true;
-    // }
-
-    // public virtual void AnimationStartMovementTrigger() { }
-
-    // public virtual void AnimationStopMovementTrigger() { }
-
-    // public virtual void AnimationTurnOffFlip() { }
-
-    // public virtual void AnimationTurnOnFlip() { }
-
-    // public virtual void AnimationActionTrigger() { }
 
     #endregion
 }

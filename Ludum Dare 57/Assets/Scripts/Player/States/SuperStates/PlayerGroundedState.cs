@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerGroundedState : PlayerState
+public class PlayerGroundedState : PlayerControlState
 {
 
     protected Vector2 input;
@@ -28,6 +28,7 @@ public class PlayerGroundedState : PlayerState
     {
         base.Enter();
         player.JumpState.ResetAmountOfJumpsLeft();
+        player.HasTeleportedInAir = false; 
     }
 
     public override void Exit()
@@ -42,7 +43,6 @@ public class PlayerGroundedState : PlayerState
         xInput          = player.InputHandler.NormInputX;
         yInput          = player.InputHandler.NormInputY;
         jumpInput       = player.InputHandler.JumpInput;
-        chargeInput     = player.InputHandler.ChargeInput;
 
         core.Movement.CheckIfShouldFlip(xInput);
 

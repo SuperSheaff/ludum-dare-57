@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerRespawnState : PlayerState
+public class PlayerStartState : PlayerState
 {
-    public PlayerRespawnState(PlayerController player, GameSettings settings) : base(player, settings)
+    public PlayerStartState(PlayerController player, GameSettings settings) : base(player, settings)
     {
     }
 

@@ -25,4 +25,10 @@ public class GameSettings : ScriptableObject
     public float deathTime      = 2f;
     public int startingHealth   = 3;
 
+    [Header("Teleport Settings")]
+    public GameObject TeleportMarkerPrefab;
+    public float TeleportMarkerSpeed    = 250f;
+    public float TeleportThrowCooldown  = 1f;
+    public float TeleportDelay          = 0.2f;
+
 }
