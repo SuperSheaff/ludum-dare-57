@@ -19,16 +19,20 @@ public class PlayerController : MonoBehaviour
     public PlayerInAirState         InAirState          { get; private set; }
     public PlayerLandState          LandState           { get; private set; }
     public PlayerTeleportState      TeleportState       { get; private set; }
+    public PlayerWallGrabState      WallGrabState       { get; private set; }
 
     [SerializeField]
     public GameSettings Settings;
 
     [SerializeField]
     public Transform TeleportMarker     { get; set; }
+    public Vector2 WallGrabPosition     { get; set; }
+
     public bool IsTeleportMarkerOut     { get; set; }
     public bool HasTeleportedInAir      { get; set; }
-    public float TeleportTime;
+    public bool HasUnlockedTeleport     { get; set; }
 
+    public float TeleportTime;
     #endregion
 
     #region Components
@@ -84,6 +88,7 @@ public class PlayerController : MonoBehaviour
             InAirState          = new PlayerInAirState(this, Settings);
             LandState           = new PlayerLandState(this, Settings);
             TeleportState       = new PlayerTeleportState(this, Settings);
+            WallGrabState       = new PlayerWallGrabState(this, Settings);
 
             IsTeleportMarkerOut = false;
             HasTeleportedInAir = false;
@@ -175,8 +180,8 @@ public class PlayerController : MonoBehaviour
                 TeleportMarker = null;
             }
 
+            SoundManager.instance.StopSound("throw");
             IsTeleportMarkerOut = false;
-            HasTeleportedInAir = false;
             TeleportTime = Time.time;
         }
 
@@ -198,6 +203,12 @@ public class PlayerController : MonoBehaviour
     public void AnimationEvent(string eventName)
     {
         StateMachine.CurrentState.OnAnimationEvent(eventName);
+    }
+
+    public void UnlockTeleportAbility()
+    {
+        HasUnlockedTeleport = true;
+        ResetTeleportMarker();
     }
 
     #endregion

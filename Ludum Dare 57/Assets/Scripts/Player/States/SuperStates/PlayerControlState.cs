@@ -51,7 +51,8 @@ public class PlayerControlState : PlayerState
 
     protected bool CanThrowTeleportMarker()
     {
-        return player.InputHandler.InteractInput &&
+        return player.HasUnlockedTeleport &&
+            player.InputHandler.InteractInput &&
             !player.IsTeleportMarkerOut &&
             Time.time >= nextThrowTime &&
             !player.HasTeleportedInAir;
@@ -59,9 +60,10 @@ public class PlayerControlState : PlayerState
 
     protected bool CanTeleport()
     {
-        return player.InputHandler.InteractInput &&
-               player.IsTeleportMarkerOut &&
-               Time.time >= TeleportReadyTime;
+        return player.HasUnlockedTeleport &&
+            player.InputHandler.InteractInput &&
+            player.IsTeleportMarkerOut &&
+            Time.time >= TeleportReadyTime;
     }
 
 }

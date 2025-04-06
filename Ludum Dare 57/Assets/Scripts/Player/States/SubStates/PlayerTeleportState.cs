@@ -13,6 +13,7 @@ public class PlayerTeleportState : PlayerAbilityState
 
         core.Movement.SetVelocityZero(); 
 
+        SoundManager.instance.StopSound("throw");
         SoundManager.instance.PlaySound("preteleport", player.transform);
         player.Animator.SetBool("teleport", true);
     }
@@ -29,6 +30,7 @@ public class PlayerTeleportState : PlayerAbilityState
         base.Exit();
 
         player.Animator.SetBool("teleport", false);
+        player.HasTeleportedInAir = true; 
     }
 
 
@@ -53,24 +55,30 @@ public class PlayerTeleportState : PlayerAbilityState
             if (marker != null)
             {
                 Vector2 safePosition = marker.CalculateSafeTeleportPosition();
-                player.transform.position = safePosition;
+                player.transform.position           = safePosition;
+                player.WallGrabPosition             = safePosition;
 
-                // If mid-air, block jump/throw
-                if (!core.CollisionSenses.Ground)
+                if (marker.ShouldGoToWallGrab(out int wallDir))
                 {
-                    player.HasTeleportedInAir = true;
+                    core.Movement.CheckIfShouldFlip(-wallDir);
+                    player.StateMachine.ChangeState(player.WallGrabState); 
+                    GameObject.Destroy(player.TeleportMarker.gameObject);
+                    player.TeleportMarker = null;
+                    player.IsTeleportMarkerOut = false;
+                    player.TeleportTime = Time.time;
+                    return;
                 }
-
-                Debug.Log("attempt tele");
             }
 
             GameObject.Destroy(player.TeleportMarker.gameObject);
             player.TeleportMarker = null;
             player.IsTeleportMarkerOut = false;
             player.TeleportTime = Time.time;
+
         }
 
         player.InputHandler.UseInteractInput();
+        player.StateMachine.ChangeState(player.InAirState); 
         isAbilityDone = true;
     }
 
