@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviour
     public PlayerLandState          LandState           { get; private set; }
     public PlayerTeleportState      TeleportState       { get; private set; }
     public PlayerWallGrabState      WallGrabState       { get; private set; }
+    public PlayerWinState           WinState            { get; private set; }
 
     [SerializeField]
     public GameSettings Settings;
@@ -89,6 +90,7 @@ public class PlayerController : MonoBehaviour
             LandState           = new PlayerLandState(this, Settings);
             TeleportState       = new PlayerTeleportState(this, Settings);
             WallGrabState       = new PlayerWallGrabState(this, Settings);
+            WinState            = new PlayerWinState(this, Settings);
 
             IsTeleportMarkerOut = false;
             HasTeleportedInAir = false;
@@ -124,32 +126,6 @@ public class PlayerController : MonoBehaviour
             {
                 StateMachine.ChangeState(RespawnState);
             }
-        }
-
-        private void OnTriggerStay2D(Collider2D collision) 
-        {
-            // if (collision.tag == "SafeZone") 
-            // {
-            //     isSafe = true;
-            // }
-
-            // if (collision.tag == "ChargeZone") 
-            // {
-            //     canPowerUp = true;
-            // }
-        }
-
-        private void OnTriggerExit2D(Collider2D collision) 
-        {
-            // if (collision.tag == "SafeZone") 
-            // {
-            //     isSafe = false;
-            // }
-
-            // if (collision.tag == "ChargeZone") 
-            // {
-            //     canPowerUp = false;
-            // }
         }
 
     #endregion
@@ -192,7 +168,7 @@ public class PlayerController : MonoBehaviour
     public void ResetGame() {
         Core.Movement.CheckIfShouldFlip(1);
         SetSpawnPoint(StartingSpawn.position);
-        StateMachine.ChangeState(RespawnState);
+        StateMachine.ChangeState(StartState);
     }
 
     public void CameraShake() {
@@ -210,6 +186,28 @@ public class PlayerController : MonoBehaviour
         HasUnlockedTeleport = true;
         ResetTeleportMarker();
     }
+
+    public void EnterWinState()
+    {
+        StateMachine.ChangeState(WinState);
+    }
+
+    public void ResetToStart()
+    {
+        RespawnPoint.position = StartingSpawn.position;
+        IsTeleportMarkerOut = false;
+        HasUnlockedTeleport = false;
+        HasTeleportedInAir = false;
+
+        if (TeleportMarker != null)
+        {
+            Destroy(TeleportMarker.gameObject);
+            TeleportMarker = null;
+        }
+
+        StateMachine.ChangeState(StartState); // Start state teleports player to spawn
+    }
+
 
     #endregion
 

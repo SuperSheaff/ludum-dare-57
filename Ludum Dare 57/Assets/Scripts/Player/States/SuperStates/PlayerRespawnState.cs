@@ -17,6 +17,8 @@ public class PlayerRespawnState : PlayerState
     {
         base.Enter();
 
+        SoundManager.instance.PlaySound("lose", player.transform);
+
         // Reset position and flip
         player.transform.position = player.RespawnPoint.position;
         core.Movement.CheckIfShouldFlip(1);
@@ -24,8 +26,7 @@ public class PlayerRespawnState : PlayerState
         // Clean up teleport state
         player.ResetTeleportMarker(); 
 
-        // Show intro text
-        GameController.instance.ShowText(0);
+        player.StateMachine.ChangeState(player.IdleState);
     }
 
     public override void Exit()
@@ -34,6 +35,7 @@ public class PlayerRespawnState : PlayerState
 
         // Hide intro text
         GameController.instance.HideText(0);
+        player.ResetTeleportMarker(); 
     }
 
     public override void Update()
@@ -43,12 +45,6 @@ public class PlayerRespawnState : PlayerState
         // Freeze movement
         core.Movement.SetVelocityZero();
 
-        // Wait for interact to start
-        if (player.InputHandler.InteractInput)
-        {
-            player.InputHandler.UseInteractInput();
-            player.StateMachine.ChangeState(player.IdleState);
-        }
     }
 
     public override void FixedUpdate()

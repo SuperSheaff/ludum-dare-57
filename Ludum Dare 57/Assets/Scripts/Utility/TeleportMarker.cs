@@ -10,14 +10,26 @@ public class TeleportMarker : MonoBehaviour
 
     [Header("Teleport Logic")]
     [SerializeField] private int maxChecks = 10;
-    [SerializeField] private float verticalStep = 0.1f;
+    [SerializeField] private float verticalStep = 5f;
     [SerializeField] private LayerMask collisionMask;
 
     [Header("Wall Detection")]
-    [SerializeField] private float wallCheckOffset = 0.05f;
+    [SerializeField] private float wallCheckOffset = 5f;
+    [SerializeField] private float contactRayDistance = 10f;
 
     public bool IsWallGrabbable { get; private set; }
     public int WallDirection { get; private set; } // -1 = left, 1 = right
+
+    public enum SurfaceContact
+    {
+        None,
+        LeftWall,
+        RightWall,
+        Ground,
+        Ceiling
+    }
+
+    public SurfaceContact CurrentContact { get; private set; } = SurfaceContact.None;
 
     private void Awake()
     {
@@ -38,6 +50,9 @@ public class TeleportMarker : MonoBehaviour
         var rb = GetComponent<Rigidbody2D>();
         rb.linearVelocity = Vector2.zero;
         rb.bodyType = RigidbodyType2D.Static;
+
+        CurrentContact = CheckCardinalContact();
+        Debug.Log(CurrentContact);
 
         DetectWallGrabSpot();
 
@@ -60,20 +75,62 @@ public class TeleportMarker : MonoBehaviour
 
     public Vector2 CalculateSafeTeleportPosition()
     {
-        Vector2 basePosition = transform.position;
+        Vector2 origin = transform.position;
+        float rayLength = checkHeight + 0.1f;
+        float offsetBuffer = 0.05f; // small gap to avoid overlap
+        Vector2 playerSize = new Vector2(checkWidth, checkHeight);
 
-        for (int i = 0; i < maxChecks; i++)
+        RaycastHit2D hitDown = Physics2D.Raycast(origin, Vector2.down, rayLength, collisionMask);
+        RaycastHit2D hitUp   = Physics2D.Raycast(origin, Vector2.up,   rayLength, collisionMask);
+        RaycastHit2D hitLeft = Physics2D.Raycast(origin, Vector2.left, rayLength, collisionMask);
+        RaycastHit2D hitRight= Physics2D.Raycast(origin, Vector2.right,rayLength, collisionMask);
+
+        // 1. If there's something below, place the player on top of it
+        if (hitDown.collider != null)
         {
-            float offsetY = i * verticalStep;
-            Vector2 checkCenter = basePosition + Vector2.up * offsetY;
-            Vector2 boxSize = new Vector2(checkWidth, checkHeight);
-
-            bool isBlocked = Physics2D.OverlapBox(checkCenter, boxSize, 0f, collisionMask);
-            if (!isBlocked)
-                return checkCenter;
+            return hitDown.point + Vector2.up * (playerSize.y * 0.5f + offsetBuffer);
         }
 
-        return basePosition + Vector2.up * checkHeight * 0.5f;
+        // 2. If there's something above, place the player below it
+        if (hitUp.collider != null)
+        {
+            return hitUp.point + Vector2.down * (playerSize.y * 0.5f + offsetBuffer);
+        }
+
+        // 3. Left wall — place to the right of it
+        if (hitLeft.collider != null)
+        {
+            return hitLeft.point + Vector2.right * (playerSize.x * 0.5f + offsetBuffer);
+        }
+
+        // 4. Right wall — place to the left of it
+        if (hitRight.collider != null)
+        {
+            return hitRight.point + Vector2.left * (playerSize.x * 0.5f + offsetBuffer);
+        }
+
+        // 5. Fallback: current marker position + slight upward offset
+        return origin + Vector2.up * (playerSize.y * 0.5f + offsetBuffer);
+    }
+
+    public SurfaceContact CheckCardinalContact()
+    {
+        Vector2 origin = transform.position;
+        LayerMask mask = collisionMask;
+
+        if (Physics2D.Raycast(origin, Vector2.down, contactRayDistance, mask))
+            return SurfaceContact.Ground;
+
+        if (Physics2D.Raycast(origin, Vector2.up, contactRayDistance, mask))
+            return SurfaceContact.Ceiling;
+
+        if (Physics2D.Raycast(origin, Vector2.left, contactRayDistance, mask))
+            return SurfaceContact.LeftWall;
+
+        if (Physics2D.Raycast(origin, Vector2.right, contactRayDistance, mask))
+            return SurfaceContact.RightWall;
+
+        return SurfaceContact.None;
     }
 
     private void DetectWallGrabSpot()
@@ -81,43 +138,31 @@ public class TeleportMarker : MonoBehaviour
         IsWallGrabbable = false;
         WallDirection = 0;
 
+        // Use the result from CheckCardinalContact() to know if we're on a wall
+        SurfaceContact contact = CheckCardinalContact();
+
+        // Only proceed if we're on a left or right wall
+        if (contact != SurfaceContact.LeftWall && contact != SurfaceContact.RightWall)
+            return;
+
+        WallDirection = (contact == SurfaceContact.LeftWall) ? -1 : 1;
+
         Vector2 origin = transform.position;
-        int[] directions = { -1, 1 };
+        float halfHeight = checkHeight * 0.5f;
 
-        foreach (int dir in directions)
+        // Check for space above (for clearance)
+        bool blockedAbove = Physics2D.Raycast(origin, Vector2.up, halfHeight + 1f, collisionMask);
+
+        // Check for ground below too close
+        bool groundTooClose = Physics2D.Raycast(origin, Vector2.down, halfHeight + 1f, collisionMask);
+
+        if (!blockedAbove && !groundTooClose)
         {
-            // Step 1: Check for wall next to marker
-            Vector2 wallCheckOrigin = origin + Vector2.right * dir * (checkWidth * 0.5f + wallCheckOffset);
-            Vector2 wallCheckSize = new Vector2(0.05f, checkHeight);
-            bool wallPresent = Physics2D.OverlapBox(wallCheckOrigin, wallCheckSize, 0f, collisionMask);
-
-            if (!wallPresent)
-                continue;
-
-            // Step 2: Check for vertical clearance to grab
-            Vector2 clearanceCheckOrigin = origin + Vector2.up * (checkHeight * 0.5f);
-            Vector2 clearanceBoxSize = new Vector2(checkWidth, checkHeight);
-            bool blockedAbove = Physics2D.OverlapBox(clearanceCheckOrigin, clearanceBoxSize, 0f, collisionMask);
-
-            // Step 3: Check we're not grounded (no wall grab from floor)
-            Vector2 groundCheckOrigin = origin + Vector2.down * wallCheckOffset;
-            Vector2 groundBoxSize = new Vector2(checkWidth, wallCheckOffset);
-            bool grounded = Physics2D.OverlapBox(groundCheckOrigin, groundBoxSize, 0f, collisionMask);
-
-            if (!blockedAbove && !grounded)
-            {
-                IsWallGrabbable = true;
-                WallDirection = dir;
-                break;
-            }
+            IsWallGrabbable = true;
         }
 
-#if UNITY_EDITOR
-        Color gizmoColor = Color.cyan;
-        Debug.DrawRay(origin + Vector2.left * (checkWidth * 0.5f + wallCheckOffset), Vector2.zero, gizmoColor, 1f);
-        Debug.DrawRay(origin + Vector2.right * (checkWidth * 0.5f + wallCheckOffset), Vector2.zero, gizmoColor, 1f);
-#endif
     }
+
 
     public bool ShouldGoToWallGrab(out int direction)
     {
@@ -130,11 +175,20 @@ public class TeleportMarker : MonoBehaviour
         Gizmos.color = Color.green;
         Vector2 basePosition = transform.position;
 
-        for (int i = 0; i < maxChecks; i++)
-        {
-            float offsetY = i * verticalStep;
-            Vector2 checkCenter = basePosition + Vector2.up * offsetY;
-            Gizmos.DrawWireCube(checkCenter, new Vector3(checkWidth, checkHeight, 0));
-        }
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawRay(transform.position, Vector2.down * (checkHeight + 0.1f));
+        Gizmos.DrawRay(transform.position, Vector2.up   * (checkHeight + 0.1f));
+        Gizmos.DrawRay(transform.position, Vector2.left * (checkHeight + 0.1f));
+        Gizmos.DrawRay(transform.position, Vector2.right* (checkHeight + 0.1f));
+
+        // Cardinal direction debug rays
+        Gizmos.color = Color.red;
+        Gizmos.DrawRay(basePosition, Vector2.left * contactRayDistance);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawRay(basePosition, Vector2.right * contactRayDistance);
+        Gizmos.color = Color.green;
+        Gizmos.DrawRay(basePosition, Vector2.down * contactRayDistance);
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawRay(basePosition, Vector2.up * contactRayDistance);
     }
 }

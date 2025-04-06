@@ -46,6 +46,7 @@ public class PlayerStartState : PlayerState
         // Wait for interact to start
         if (player.InputHandler.InteractInput)
         {
+            GameController.instance.StartTimer();
             player.InputHandler.UseInteractInput();
             player.StateMachine.ChangeState(player.IdleState);
         }

@@ -46,16 +46,17 @@ public class PlayerWallGrabState : PlayerState
         // Case 1: Wall Jump
         if (jumpInput)
         {
-            player.StateMachine.ChangeState(player.JumpState);
             player.ResetTeleportMarker();
+            player.HasTeleportedInAir = false;
+            player.StateMachine.ChangeState(player.JumpState);
             return;
         }
 
         // Case 2: Drop from wall (down)
         if (yInput == -1)
         {
-            player.StateMachine.ChangeState(player.InAirState);
             player.ResetTeleportMarker(); 
+            player.StateMachine.ChangeState(player.InAirState);
             return;
         }
 

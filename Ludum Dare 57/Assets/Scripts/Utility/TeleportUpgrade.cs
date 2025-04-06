@@ -14,6 +14,7 @@ public class TeleportUpgrade : MonoBehaviour
             {
                 GameController.instance.ShowText(1);
                 PlayerController.instance.UnlockTeleportAbility();
+                SoundManager.instance.PlaySound("pickup", this.transform);
 
                 // if (pickupSound != null)
                 // {
@@ -24,7 +25,7 @@ public class TeleportUpgrade : MonoBehaviour
                 // {
                 //     Instantiate(pickupVFX, transform.position, Quaternion.identity);
                 // }
-
+                GameController.instance.ClearTeleportUpgradeReference();
                 Destroy(gameObject);
             }
         }

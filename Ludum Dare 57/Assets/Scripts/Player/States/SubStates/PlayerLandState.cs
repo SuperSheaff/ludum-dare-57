@@ -17,8 +17,7 @@ public class PlayerLandState : PlayerGroundedState
     {
         base.Enter();
 
-        // player.playerAudioManager.PlaySound("PlayerLand");
-        // player.playerLandParticles.Play();
+        SoundManager.instance.PlaySound("landing", player.transform);
     }
 
     public override void Exit()
@@ -35,9 +34,6 @@ public class PlayerLandState : PlayerGroundedState
         if (!isExitingState) {
             if (xInput != 0) {
                 player.StateMachine.ChangeState(player.MoveState);
-            // } else if (isAnimationFinished) {
-            //     player.StateMachine.ChangeState(player.IdleState);
-            // }
             } else {
                 player.StateMachine.ChangeState(player.IdleState);
             }

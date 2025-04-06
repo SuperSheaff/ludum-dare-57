@@ -7,6 +7,10 @@ public class PlayerControlState : PlayerState
     protected float nextThrowTime;
     protected float TeleportReadyTime;
 
+    private int downPressCount = 0;
+    private float lastDownPressTime = 0f;
+    private float downResetWindow = 0.5f;
+
     public PlayerControlState(PlayerController player, GameSettings settings) : base(player, settings)
     {
     }
@@ -14,6 +18,14 @@ public class PlayerControlState : PlayerState
     public override void Update()
     {
         base.Update();
+
+        // Reset marker with one down press
+        if (player.InputHandler.NormInputY == -1 && player.IsTeleportMarkerOut)
+        {
+            SoundManager.instance.PlaySound("reset", player.transform);
+            player.ResetTeleportMarker();
+        }
+
 
         if (CanTeleport())
         {
