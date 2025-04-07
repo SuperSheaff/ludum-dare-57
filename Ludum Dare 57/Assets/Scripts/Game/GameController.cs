@@ -44,8 +44,15 @@ public class GameController : MonoBehaviour
             winText.text = "NEARLY THERE, LETS GO!";
 
         CacheTextObjects();
+    }
 
-        ResetGame();
+    private void Start()
+    {
+        // Respawn the upgrade
+        if (teleportUpgradePrefab != null && teleportUpgradeSpawnPoint != null && activeTeleportUpgrade == null)
+        {
+            activeTeleportUpgrade = Instantiate(teleportUpgradePrefab, teleportUpgradeSpawnPoint.position, Quaternion.identity);
+        }
     }
 
     private void Update()
@@ -168,12 +175,10 @@ public class GameController : MonoBehaviour
         UpdateTimerText();
         timerRunning = false;
 
-        SoundManager.instance.PlaySound("restart", this.transform);
-
         if (winText != null)
             winText.text = "NEARLY THERE, LETS GO!";
 
-        PlayerController.instance?.ResetToStart();
+        PlayerController.instance.ResetToStart();
 
         // Respawn the upgrade
         if (teleportUpgradePrefab != null && teleportUpgradeSpawnPoint != null && activeTeleportUpgrade == null)

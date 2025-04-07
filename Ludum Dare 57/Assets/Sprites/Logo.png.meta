@@ -129,10 +129,10 @@ TextureImporter:
       name: Logo_0
       rect:
         serializedVersion: 2
-        x: 57
-        y: 87
-        width: 142
-        height: 82
+        x: 728
+        y: 826
+        width: 464
+        height: 268
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}

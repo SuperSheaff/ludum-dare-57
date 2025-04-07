@@ -165,7 +165,8 @@ public class PlayerController : MonoBehaviour
 
     #region Other Functions
 
-    public void ResetGame() {
+    public void ResetGame() 
+    {
         Core.Movement.CheckIfShouldFlip(1);
         SetSpawnPoint(StartingSpawn.position);
         StateMachine.ChangeState(StartState);
@@ -205,7 +206,9 @@ public class PlayerController : MonoBehaviour
             TeleportMarker = null;
         }
 
-        StateMachine.ChangeState(StartState); // Start state teleports player to spawn
+        SoundManager.instance.PlaySound("restart");
+
+        ResetGame();
     }
 
 
